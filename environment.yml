@@ -1,0 +1,3 @@
+name: ev-trip-planner
+dependencies:
+  - scipy
