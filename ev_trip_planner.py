@@ -33,6 +33,19 @@ class vehicle():
         self.battery = battery(battery_capacity_kWh, battery_charging_rate_kWh_per_min)
         self.batt_reserve = battery_reserve_percent
         self.power_consumption = power_per_kmh
+
+    def min_break_duration(self,
+                           distance: float,
+                           speed: float,
+                           end_batt_state: float = None,
+                           start_batt_state: float = 100
+                           ) -> float:
+        result = (
+            - self.battery.kWh(start_batt_state)
+            + distance/100*self.power_consumption(speed)
+            + self.battery.kWh(end_batt_state)
+        )/self.battery.charge_rate
+        return result if result > 0 else 0
     
     def max_trip_speed(self,
                        distance: float,
