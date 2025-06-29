@@ -89,22 +89,16 @@ def build_page():
         icon="🚀",
         color="green",
     )
-    _left.badge(
-        "Breaks (min):  "
-        + ", ".join(
-            [
-                f"{i + 1}.  {t:.0f}"
-                for i, t in enumerate(
-                    model.min_break_duration(
-                        st.session_state["distance"],
-                        st.session_state["speed"],
-                        st.session_state["end_state"],
-                        st.session_state["start_state"],
-                    )
+    break_list = model.min_break_duration(
+                    st.session_state["distance"],
+                    st.session_state["speed"],
+                    st.session_state["end_state"],
+                    st.session_state["start_state"],
                 )
-            ]
-        ),
-        icon="⏳",
+    _left.badge(
+        (f"{len(break_list)}x " if len(break_list) > 2 else "")
+        + f"{break_list[0]:.0f} + {break_list[-1]:.0f} min",
+        icon="🔌",
         color="orange",
     )
     st.markdown("Gute Fahrt, Mast- und Schotbruch!")
