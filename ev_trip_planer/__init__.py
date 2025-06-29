@@ -1,4 +1,4 @@
-""" package doc string """ # TODO
+"""package doc string"""  # TODO
 
 __version__ = "0.1.dev0"
 
