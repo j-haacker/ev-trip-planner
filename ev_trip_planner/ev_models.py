@@ -9,10 +9,8 @@ def tesla_y_long():
     batt = battery(
         capacity=75,
         charging_rate=[
-            [
-                10,
-                211,
-            ],  # data scrapped from https://zecar.com/resources/tesla-model-y-charging-guide
+            # data scrapped from https://zecar.com/resources/tesla-model-y-charging-guide
+            [10, 211],
             [15, 198],
             [20, 185],
             [25, 172],
