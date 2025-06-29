@@ -77,7 +77,15 @@ def build_page():
     _right.number_input("Number of breaks", 0, 10, 1, 1, key="n_breaks")
     _right.slider("Break duration", 3, 60, 25, 1, key="break_duration")
     _right.badge(
-        f"Traveling speed {model.max_trip_speed(st.session_state['distance'], st.session_state['n_breaks'], st.session_state['break_duration'], st.session_state['end_state'], st.session_state['start_state']):.0f} km/h",
+        "Traveling speed {:.0f} km/h".format(
+            model.max_trip_speed(
+                st.session_state["distance"],
+                st.session_state["n_breaks"],
+                st.session_state["break_duration"],
+                st.session_state["end_state"],
+                st.session_state["start_state"],
+            )
+        ),
         icon="🚀",
         color="green",
     )
