@@ -77,20 +77,18 @@ class vehicle:
         self.battery.state = start_batt_state
         result = []
         while distance > 0:
-            if self.power_consumption(
+            if self.battery.kWh() - self.power_consumption(
                 speed
-            ) * distance / 100 < self.battery.kWh() - self.battery.kWh(end_batt_state):
+            ) * distance / 100 > self.battery.kWh(end_batt_state):
                 distance = 0
             else:
-                if self.power_consumption(
+                if self.battery.kWh() - self.power_consumption(
                     speed
-                ) * distance / 100 < self.battery.kWh() - self.battery.kWh(
-                    self.batt_reserve
-                ):
+                ) * distance / 100 > self.battery.kWh(self.batt_reserve):
                     self.battery.state = (
                         (
                             self.battery.kWh()
-                            - distance / speed * self.power_consumption(speed)
+                            - self.power_consumption(speed) * distance / 100
                         )
                         / self.battery.capa
                         * 100
@@ -99,12 +97,9 @@ class vehicle:
                     result.append(self.battery.charge(stop_percentage=end_batt_state))
                 else:
                     distance -= (
-                        (
-                            self.battery.kWh(start_batt_state)
-                            - self.battery.kWh(self.batt_reserve)
-                        )
+                        (self.battery.kWh() - self.battery.kWh(self.batt_reserve))
                         / self.power_consumption(speed)
-                        * speed
+                        * 100
                     )
                     self.battery.state = self.batt_reserve
                     if self.power_consumption(
