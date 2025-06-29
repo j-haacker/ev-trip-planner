@@ -1,5 +1,7 @@
 name: ev-trip-planner
 dependencies:
+  - numpy
   - matplotlib
+  - pandas
   - scipy
   - streamlit
