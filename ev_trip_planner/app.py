@@ -96,7 +96,7 @@ def build_page():
                     st.session_state["start_state"],
                 )
     _left.badge(
-        (f"{len(break_list)}x " if len(break_list) > 2 else "")
+        (f"{len(break_list) - 1}x " if len(break_list) > 2 else "")
         + f"{break_list[0]:.0f} + {break_list[-1]:.0f} min",
         icon="🔌",
         color="orange",

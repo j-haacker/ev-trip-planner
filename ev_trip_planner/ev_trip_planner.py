@@ -142,16 +142,13 @@ class vehicle:
                 batt.charge(duration=duration)
                 return batt.state
 
-            start = max(
-                self.batt_reserve,
-                minimize_scalar(
-                    lambda x: charge_test(self.battery, x, break_duration)
-                    - end_batt_state,
+            start = minimize_scalar(
+                    lambda x: (charge_test(self.battery, x, break_duration)
+                    - end_batt_state) ** 2,
                     bounds=(self.batt_reserve, end_batt_state),
                     method="bounded",
                     options=dict(xatol=0.1),
-                ).x,
-            )
+                ).x
             batt_clone.state = start
             available_charge += batt_clone.charge(duration=break_duration)
         if break_number >= 2:
