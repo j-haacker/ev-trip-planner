@@ -10,6 +10,7 @@ def tesla_y_long():
         capacity=75,
         charging_rate=[
             # data scrapped from https://zecar.com/resources/tesla-model-y-charging-guide
+            [0, 211],
             [10, 211],
             [15, 198],
             [20, 185],
