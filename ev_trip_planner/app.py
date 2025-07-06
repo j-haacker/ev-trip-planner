@@ -1,9 +1,12 @@
 """Streamlit webapp"""
 
+from json import dumps as j_dumps
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
+from urllib.parse import quote
+from webbrowser import open as w_open
 import ev_models
 import ev_trip_planner
 
@@ -17,6 +20,28 @@ def callback_end_state():
         )
         st.session_state["end_state"] = st.session_state.res_prc
 
+
+def callback_feedback():
+    w_open(
+        "&".join(
+            [
+                "mailto:?to=ev-trip-planner@riseup.net",
+                "subject=[EVtp:data]",
+                "body="
+                + quote(
+                    j_dumps(
+                        {
+                            k[:-8]: str(v)
+                            for k, v in st.session_state.items()
+                            if k.endswith("_fb_data")
+                        }
+                    )
+                    + "\n-----\nLeave the above as is.",
+                    safe="",
+                ),
+            ]
+        )
+    )
 
 
 def callback_res_prc():
@@ -79,6 +104,54 @@ def build_EV_section():
     ax.set_xlabel("Battery state, %")
     ax.set_ylabel("Charging rate, kW")
     _c[2].pyplot(fig)
+
+
+def build_feedback_section():
+    st.link_button(
+        "Wuensche/Ideen", "mailto:?to=ev-trip-planner@riseup.net&subject=[EVtp:fb]"
+    )
+    with st.popover("Send in trip details"):
+        st.write(
+            "Please submit value to preformat email, click the send link, and send "
+            "from you email client."
+        )
+        with st.form(key="jouney_feedback", enter_to_submit=False):
+            st.text_input(
+                "EV model", st.session_state.EV, max_chars=80, key="EV_fb_data"
+            )
+            st.number_input(
+                "Distance", 1, 9999, st.session_state.distance, key="dist_fb_data"
+            )
+            tmp = pd.Timedelta(
+                st.session_state.distance / st.session_state.speed, "hours"
+            ).components
+            st.time_input(
+                "Time w/out breaks",
+                f"{tmp.hours:02d}:{tmp.minutes:02d}",
+                key="time_fb_data",
+            )
+            st.number_input("Charged (kWh)", 0.0, 999.0, key="charged_fb_data")
+            st.number_input(
+                "Start battery state (%)",
+                5,
+                100,
+                int(st.session_state.start_state),
+                key="start_fb_data",
+            )
+            st.number_input(
+                "End battery state (%)",
+                0,
+                100,
+                int(st.session_state.end_state),
+                key="end_fb_data",
+            )
+            st.text_area(
+                "Notes",
+                "zB starker Gegenwind, Hitze, Kaelte, nasse Bahn, etc",
+                max_chars=250,
+                key="notes_fb_data",
+            )
+            st.form_submit_button("Create email", on_click=callback_feedback)
 
 
 def build_trip_section():
@@ -171,6 +244,8 @@ def build_page():
     build_trip_section()
     build_results_section()
     st.markdown("Gute Fahrt, Mast- und Schotbruch!")
+    st.write("-----")
+    build_feedback_section()
 
 
 if __name__ == "__main__":
