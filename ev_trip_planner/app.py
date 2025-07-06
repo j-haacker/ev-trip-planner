@@ -8,12 +8,25 @@ import ev_models
 import ev_trip_planner
 
 
+def callback_end_state():
+    if st.session_state.end_state < st.session_state.res_prc:
+        st.warning(
+            "End battery state cannot be lower than battery reserve. Adjust reserve "
+            "setting if needed.",
+            icon="❗",
+        )
+        st.session_state["end_state"] = st.session_state.res_prc
+
+
+
 def callback_res_prc():
     st.session_state["res_km"] = (
         EV.battery.kWh(st.session_state.res_prc)
         / EV.power_consumption(st.session_state.res_sp)
         * 100
     )
+    if st.session_state.end_state < st.session_state.res_prc:
+        st.session_state["end_state"] = st.session_state.res_prc
 
 
 def callback_res_km_sp():
@@ -22,6 +35,8 @@ def callback_res_km_sp():
         * EV.power_consumption(st.session_state.res_sp)
         / EV.battery.capa
     )
+    if st.session_state.end_state < st.session_state.res_prc:
+        st.session_state["end_state"] = st.session_state.res_prc
 
 
 def build_EV_section():
@@ -71,14 +86,24 @@ def build_trip_section():
     _c = st.container(border=True).tabs(["Trip", "Reserve"])
     _c[0].slider("Trip distance", 0, 2000, 600, 1, key="distance")
     _c[0].slider("Start battery state (%)", 0, 100, 90, 1, key="start_state")
-    _c[0].slider("End battery state (%)", 0, 100, 10, 1, key="end_state")
+    if "res_prc" not in st.session_state:
+        st.session_state["res_prc"] = EV.batt_reserve
+    if "end_state" not in st.session_state:
+        st.session_state["end_state"] = st.session_state.res_prc
+    _c[0].slider(
+        "End battery state (%)",
+        0.0,
+        100.0,
+        step=1.0,
+        format="%.0f",
+        key="end_state",
+        on_change=callback_end_state,
+    )
     _c1_prc = _c[1].container()
     _c1_km_sp = _c[1].columns(2, vertical_alignment="center")
     _c1_km_sp[1].slider(
         "at Speed", 70, 130, 110, 1, key="res_sp", on_change=callback_res_km_sp
     )
-    if "res_prc" not in st.session_state:
-        st.session_state["res_prc"] = EV.batt_reserve
     if "res_km" not in st.session_state:
         st.session_state["res_km"] = (
             EV.battery.kWh(st.session_state.res_prc)
@@ -86,10 +111,22 @@ def build_trip_section():
             * 100
         )
     _c1_prc.slider(
-        "Battery (%)", 1.0, 25.0, step=0.5, key="res_prc", on_change=callback_res_prc
+        "Battery (%)",
+        1.0,
+        25.0,
+        step=0.5,
+        format="%.1f",
+        key="res_prc",
+        on_change=callback_res_prc,
     )
     _c1_km_sp[0].slider(
-        "Distance", 10, 80, step=1, key="res_km", on_change=callback_res_km_sp
+        "Distance",
+        10.0,
+        80.0,
+        step=1.0,
+        format="%.0f",
+        key="res_km",
+        on_change=callback_res_km_sp,
     )
     EV.batt_reserve = st.session_state.res_prc
 
