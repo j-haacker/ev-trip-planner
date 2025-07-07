@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from urllib.parse import quote
-from webbrowser import open as w_open
 import ev_models
 import ev_trip_planner
 
@@ -21,8 +20,9 @@ def callback_end_state():
         st.session_state["end_state"] = st.session_state.res_prc
 
 
-def callback_feedback():
-    w_open(
+def callback_feedback(container):
+    container.link_button(
+        "Compose mail",
         "&".join(
             [
                 "mailto:?to=ev-trip-planner@riseup.net",
@@ -40,7 +40,7 @@ def callback_feedback():
                     safe="",
                 ),
             ]
-        )
+        ),
     )
 
 
@@ -151,7 +151,10 @@ def build_feedback_section():
                 max_chars=250,
                 key="notes_fb_data",
             )
-            st.form_submit_button("Create email", on_click=callback_feedback)
+            _left, _right = st.columns(2, vertical_alignment="bottom")
+            _left.form_submit_button(
+                "Activate link button", on_click=callback_feedback, args=[_right]
+            )
 
 
 def build_trip_section():
