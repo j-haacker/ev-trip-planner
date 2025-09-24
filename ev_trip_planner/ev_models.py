@@ -1,4 +1,5 @@
 from ev_trip_planner import battery, vehicle
+from numpy import polyval
 
 
 __all__ = ["tesla_y_long"]
@@ -34,7 +35,8 @@ def tesla_y_long():
         battery_=batt,
         # below a quadratic velocity dependent approx. is given
         # corresponding to about 17 kWh/100km @ 110 km/h (22@130)
-        power_per_kmh=lambda velocity: 8.28571
-        - 0.0307143 * velocity
-        + 0.00107143 * velocity**2,
+        power_per_kmh=lambda velocity, temperature: (
+            8.29 - 0.0307 * velocity + 0.00107 * velocity**2
+        )
+        / polyval([2.01e-8, -6.27e-6, -6.93e-5, 1.10e-2, 8.43e-1], temperature),
     )

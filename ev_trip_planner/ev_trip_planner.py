@@ -51,9 +51,10 @@ class vehicle:
         battery_capacity_kWh: float = 75,
         battery_charging_rate_kWh_per_min: float = 75 * 0.8 / 20,
         battery_reserve_percent: float = 10,
-        power_per_kmh: callable = lambda velocity: 8.28571
-        - 0.0307143 * velocity
-        + 0.00107143 * velocity**2,
+        power_per_kmh: callable = lambda velocity, temperature: (
+            8.29 - 0.0307 * velocity + 0.00107 * velocity**2
+        )
+        / np.polyval([2.01e-8, -6.27e-6, -6.93e-5, 1.10e-2, 8.43e-1], temperature),
         battery_: "battery" = None,
     ):
         if battery_ is None:
@@ -69,6 +70,7 @@ class vehicle:
         self,
         distance: float,
         speed: float,
+        temperature: float,
         end_batt_state: float = None,
         start_batt_state: float = 100,
     ) -> float:
@@ -78,17 +80,19 @@ class vehicle:
         result = []
         while distance > 0:
             if self.battery.kWh() - self.power_consumption(
-                speed
+                speed, temperature
             ) * distance / 100 > self.battery.kWh(end_batt_state):
                 distance = 0
             else:
                 if self.battery.kWh() - self.power_consumption(
-                    speed
+                    speed, temperature
                 ) * distance / 100 > self.battery.kWh(self.batt_reserve):
                     self.battery.state = (
                         (
                             self.battery.kWh()
-                            - self.power_consumption(speed) * distance / 100
+                            - self.power_consumption(speed, temperature)
+                            * distance
+                            / 100
                         )
                         / self.battery.capa
                         * 100
@@ -98,12 +102,12 @@ class vehicle:
                 else:
                     distance -= (
                         (self.battery.kWh() - self.battery.kWh(self.batt_reserve))
-                        / self.power_consumption(speed)
+                        / self.power_consumption(speed, temperature)
                         * 100
                     )
                     self.battery.state = self.batt_reserve
                     if self.power_consumption(
-                        speed
+                        speed, temperature
                     ) * distance / 100 > self.battery.kWh(80) - self.battery.kWh(
                         end_batt_state
                     ):
@@ -112,7 +116,9 @@ class vehicle:
                         result.append(
                             self.battery.charge(
                                 stop_percentage=(
-                                    self.power_consumption(speed) * distance / 100
+                                    self.power_consumption(speed, temperature)
+                                    * distance
+                                    / 100
                                     + self.battery.kWh(end_batt_state)
                                 )
                                 / self.battery.capa
@@ -124,6 +130,7 @@ class vehicle:
     def max_trip_speed(
         self,
         distance: float,
+        temperature: float,
         break_number: int = 0,
         break_duration: float = 15,
         end_batt_state: float = None,
@@ -163,7 +170,10 @@ class vehicle:
                 duration=break_duration
             )
         return minimize_scalar(
-            lambda x: (self.power_consumption(x) * distance / 100 - available_charge)
+            lambda x: (
+                self.power_consumption(x, temperature) * distance / 100
+                - available_charge
+            )
             ** 2,
             bounds=(0, 999),
             method="bounded",
@@ -176,7 +186,8 @@ if __name__ == "__main__":
     print(
         "Possible speed for a 450 km ride give two 15 min breaks (starting with 100 %, ending with 10 %):\n",
         ev.max_trip_speed(
-            450,
+            distance=450,
+            temperature=18,
             break_number=2,
             break_duration=15,
             end_batt_state=10,

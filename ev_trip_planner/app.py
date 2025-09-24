@@ -47,7 +47,7 @@ def callback_feedback(container):
 def callback_res_prc():
     st.session_state["res_km"] = (
         EV.battery.kWh(st.session_state.res_prc)
-        / EV.power_consumption(st.session_state.res_sp)
+        / EV.power_consumption(st.session_state.res_sp, st.session_state.temp)
         * 100
     )
     if st.session_state.end_state < st.session_state.res_prc:
@@ -57,11 +57,15 @@ def callback_res_prc():
 def callback_res_km_sp():
     st.session_state["res_prc"] = (
         st.session_state.res_km
-        * EV.power_consumption(st.session_state.res_sp)
+        * EV.power_consumption(st.session_state.res_sp, st.session_state.temp)
         / EV.battery.capa
     )
     if st.session_state.end_state < st.session_state.res_prc:
         st.session_state["end_state"] = st.session_state.res_prc
+
+
+def callback_temp():
+    callback_res_km_sp()
 
 
 def build_EV_section():
@@ -93,7 +97,7 @@ def build_EV_section():
 
     fig, ax = plt.subplots(figsize=(6, 2))
     _x = np.linspace(30, 160, 50)
-    ax.plot(_x, [EV.power_consumption(x) for x in _x])
+    ax.plot(_x, [EV.power_consumption(x, 25) for x in _x])
     ax.set_xlabel("Speed, km/h")
     ax.set_ylabel("Power demand\nkWh per 100 km")
     _c[1].pyplot(fig)
@@ -161,12 +165,13 @@ def build_trip_section():
     global EV
     _c = st.container(border=True).tabs(["Trip", "Reserve"])
     _c[0].slider("Trip distance", 0, 2000, 600, 1, key="distance")
-    _c[0].slider("Start battery state (%)", 0, 100, 90, 1, key="start_state")
+    _c0l, _c0r = _c[0].columns(2)
+    _c0l.slider("Start battery state (%)", 0, 100, 90, 1, key="start_state")
     if "res_prc" not in st.session_state:
         st.session_state["res_prc"] = EV.batt_reserve
     if "end_state" not in st.session_state:
         st.session_state["end_state"] = st.session_state.res_prc
-    _c[0].slider(
+    _c0l.slider(
         "End battery state (%)",
         0.0,
         100.0,
@@ -175,6 +180,7 @@ def build_trip_section():
         key="end_state",
         on_change=callback_end_state,
     )
+    _c0r.slider("Temperature", -15, 40, 18, 1, key="temp", on_change=callback_temp)
     _c1_prc = _c[1].container()
     _c1_km_sp = _c[1].columns(2, vertical_alignment="center")
     _c1_km_sp[1].slider(
@@ -183,7 +189,7 @@ def build_trip_section():
     if "res_km" not in st.session_state:
         st.session_state["res_km"] = (
             EV.battery.kWh(st.session_state.res_prc)
-            / EV.power_consumption(st.session_state.res_sp)
+            / EV.power_consumption(st.session_state.res_sp, st.session_state.temp)
             * 100
         )
     _c1_prc.slider(
@@ -217,6 +223,7 @@ def build_results_section():
         "Traveling speed {:.0f} km/h".format(
             EV.max_trip_speed(
                 st.session_state["distance"],
+                st.session_state["temp"],
                 st.session_state["n_breaks"],
                 st.session_state["break_duration"],
                 st.session_state["end_state"],
@@ -229,6 +236,7 @@ def build_results_section():
     break_list = EV.min_break_duration(
         st.session_state["distance"],
         st.session_state["speed"],
+        st.session_state["temp"],
         st.session_state["end_state"],
         st.session_state["start_state"],
     )
