@@ -126,6 +126,9 @@ def build_feedback_section():
             st.number_input(
                 "Distance", 1, 9999, st.session_state.distance, key="dist_fb_data"
             )
+            st.number_input(
+                "Temperature", -30, 50, st.session_state.temp, key="temp_fb_data"
+            )
             tmp = pd.Timedelta(
                 st.session_state.distance / st.session_state.speed, "hours"
             ).components
